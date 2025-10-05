@@ -1,6 +1,7 @@
 import { AzureCliCredential, ChainedTokenCredential, DefaultAzureCredential, TokenCredential } from "@azure/identity";
 import { AccountInfo, AuthenticationResult, PublicClientApplication } from "@azure/msal-node";
 import open from "open";
+import { getPersonalAccessTokenHandler, WebApi } from "azure-devops-node-api";
 
 const scopes = ["499b84ac-1321-427f-aa17-267ca6975798/.default"];
 
@@ -78,4 +79,44 @@ function createAuthenticator(type: string, tenantId?: string): () => Promise<str
       };
   }
 }
+
+export interface AuthConfig {
+  organizationUrl: string;
+  personalAccessToken?: string;
+}
+
+export function createWebApiFromPAT(organizationUrl: string, personalAccessToken: string): WebApi {
+  const authHandler = getPersonalAccessTokenHandler(personalAccessToken);
+  return new WebApi(organizationUrl, authHandler);
+}
+
+export function getAuthConfigFromEnv(): AuthConfig | null {
+  const organizationUrl = process.env.AZURE_DEVOPS_ORG_URL;
+  const personalAccessToken = process.env.AZURE_DEVOPS_PAT;
+
+  if (!organizationUrl) {
+    console.warn("AZURE_DEVOPS_ORG_URL environment variable not set");
+    return null;
+  }
+
+  if (!personalAccessToken) {
+    console.warn("AZURE_DEVOPS_PAT environment variable not set");
+    return null;
+  }
+
+  return {
+    organizationUrl,
+    personalAccessToken
+  };
+}
+
+export function createWebApiFromEnv(): WebApi | null {
+  const config = getAuthConfigFromEnv();
+  if (!config || !config.personalAccessToken) {
+    return null;
+  }
+
+  return createWebApiFromPAT(config.organizationUrl, config.personalAccessToken);
+}
+
 export { createAuthenticator };

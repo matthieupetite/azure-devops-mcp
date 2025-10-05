@@ -1,9 +1,30 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+import { WebApi } from "azure-devops-node-api";
+
 export const apiVersion = "7.2-preview.1";
 export const batchApiVersion = "5.0";
 export const markdownCommentsApiVersion = "7.2-preview.4";
+
+declare global {
+  var azureDevOpsWebApi: WebApi;
+  var azureDevOpsOrgUrl: string;
+}
+
+export function getWebApi(): WebApi {
+  if (!global.azureDevOpsWebApi) {
+    throw new Error("Azure DevOps WebApi not initialized. Please check your environment variables.");
+  }
+  return global.azureDevOpsWebApi;
+}
+
+export function getOrganizationUrl(): string {
+  if (!global.azureDevOpsOrgUrl) {
+    throw new Error("Azure DevOps organization URL not initialized. Please check your environment variables.");
+  }
+  return global.azureDevOpsOrgUrl;
+}
 
 export function createEnumMapping<T extends Record<string, string | number>>(enumObject: T): Record<string, T[keyof T]> {
   const mapping: Record<string, T[keyof T]> = {};
